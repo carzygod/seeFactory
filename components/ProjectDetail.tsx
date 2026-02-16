@@ -130,7 +130,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
           ) : (
             <div className="max-w-4xl mx-auto bg-white text-black p-12 min-h-screen shadow-2xl font-serif">
               <h1 className="text-4xl text-center font-bold mb-4 uppercase underline underline-offset-4">{project.title}</h1>
-              <div className="text-center mb-12">
+              <div className="text-center mb-12 flex flex-col items-center">
+                <img src="/logo.png" alt="Logo" className="w-12 h-12 mb-2 opacity-80" />
                 <p className="uppercase text-sm mb-1">By</p>
                 <p className="font-bold">SeeFactory AI</p>
               </div>

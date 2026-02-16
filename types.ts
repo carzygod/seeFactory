@@ -26,10 +26,13 @@ export interface MovieScript {
   scenes: SceneFrame[];
 }
 
+export type ProjectMode = 'storyboard' | 'video_continuation' | 'freeform';
+
 export interface Project {
   id: string;
   title: string;
   createdAt: number;
+  mode: ProjectMode;
   params: {
     type: VideoType;
     style: VideoStyle;
@@ -37,6 +40,8 @@ export interface Project {
     length: VideoLength;
     customLength?: number; // in minutes
     content: string;
+    videoUrl?: string; // For video_continuation mode
+    lastFrameUrl?: string; // Auto-extracted from video
   };
   script: MovieScript | null;
   status: 'draft' | 'generating_script' | 'generating_images' | 'completed' | 'error';

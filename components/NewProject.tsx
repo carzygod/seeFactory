@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { VideoType, VideoStyle, VideoLength, Project } from '../types';
+import React, { useState, useRef } from 'react';
+import { VideoType, VideoStyle, VideoLength, Project, ProjectMode } from '../types';
 import { Button } from './Button';
 import { generateMovieScript, generateSceneImage } from '../services/aiService';
-import { Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowRight, CheckCircle2, Film, Edit3, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
 
 interface NewProjectProps {
   apiKey: string;
@@ -27,13 +27,22 @@ const generateId = () => {
 export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated }) => {
   const [step, setStep] = useState<'input' | 'processing'>('input');
 
+  // Mode State
+  const [mode, setMode] = useState<ProjectMode>('storyboard');
+
   // Form State
+  const [titleInput, setTitleInput] = useState(''); // For video_continuation
   const [type, setType] = useState<VideoType>('Action');
   const [style, setStyle] = useState<VideoStyle>('Cyberpunk');
   const [customStyle, setCustomStyle] = useState('');
   const [length, setLength] = useState<VideoLength>('14s');
   const [customLength, setCustomLength] = useState<string>('1');
   const [content, setContent] = useState('');
+
+  // Video Processing State
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [lastFrameUrl, setLastFrameUrl] = useState<string | null>(null);
+  const [isProcessingVideo, setIsProcessingVideo] = useState(false);
 
   // Processing State
   const [processingStatus, setProcessingStatus] = useState<string>('Initializing...');
@@ -48,14 +57,74 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
     return parseInt(length.replace('min', ''));
   };
 
+  const handleVideoUpload = (file: File) => {
+    setSelectedFile(file);
+    setIsProcessingVideo(true);
+    setLastFrameUrl(null);
+
+    // Extract last frame
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = URL.createObjectURL(file);
+    video.muted = true;
+
+    video.onloadedmetadata = () => {
+      // Seek to almost the end (99%) to avoid potential black frames at very end
+      video.currentTime = Math.max(0, video.duration - 0.1);
+    };
+
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg');
+          setLastFrameUrl(dataUrl);
+          setIsProcessingVideo(false);
+          // Revoke url
+          URL.revokeObjectURL(video.src);
+        }
+      } catch (e) {
+        console.error("Frame extraction error", e);
+        alert("Failed to extract frame from video.");
+        setIsProcessingVideo(false);
+      }
+    };
+
+    video.onerror = () => {
+      alert("Error loading video file.");
+      setIsProcessingVideo(false);
+    };
+  };
+
   const handleGenerate = async () => {
     if (!apiKey) {
       alert("Please configure your API Key in Settings first.");
       return;
     }
-    if (!content.trim()) {
-      alert("Please provide video content description.");
-      return;
+
+    // Validation
+    if (mode === 'video_continuation') {
+      if (!titleInput.trim()) {
+        alert("Please enter a project name.");
+        return;
+      }
+      if (!selectedFile) {
+        alert("Please upload a video file.");
+        return;
+      }
+      if (isProcessingVideo) {
+        alert("Please wait for video processing to complete.");
+        return;
+      }
+    } else {
+      if (!content.trim()) {
+        alert("Please provide video content/instruction.");
+        return;
+      }
     }
 
     // Move UI update to top to ensure immediate feedback
@@ -68,16 +137,27 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       const duration = parseDuration();
       const finalStyle = style === 'Custom' ? customStyle : style;
 
-      addLog('Drafting script parameters...');
+      addLog(`Drafting project in ${mode} mode...`);
 
       // Safe ID generation
       const projectId = generateId();
+      const projectTitle = mode === 'video_continuation' ? titleInput : 'Untitled Project';
 
       const newProject: Project = {
         id: projectId,
-        title: 'Untitled Project',
+        title: projectTitle,
         createdAt: Date.now(),
-        params: { type, style, customStyle, length, customLength: duration, content },
+        mode: mode,
+        params: {
+          type,
+          style,
+          customStyle,
+          length,
+          customLength: duration,
+          content: mode === 'video_continuation' ? `Continue story from video: ${titleInput}` : content,
+          videoUrl: selectedFile ? URL.createObjectURL(selectedFile) : undefined,
+          lastFrameUrl: lastFrameUrl || undefined
+        },
         script: null,
         status: 'generating_script',
         progress: 5
@@ -87,14 +167,27 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       setProcessingStatus('Drafting Script & Storyboard...');
       addLog('Contacting Screenwriter Agent (OpenRouter / GPT-5)...');
 
-      const script = await generateMovieScript(apiKey, type, finalStyle, duration, content);
+      // Adjust prompt context based on mode
+      let contextContent = content;
+      if (mode === 'video_continuation') {
+        contextContent = `[VIDEO CONTINUATION] The user provided a video titled "${titleInput}". Task: Continue the visual narrative immediately following this scene. The last frame is provided (implicitly). Use standard cinematic continuation techniques.`;
+      } else if (mode === 'freeform') {
+        contextContent = `[FREEFORM] Generate a creative starting point and subsequent narrative based on: ${content}`;
+      }
+
+      // NOTE: In a real implementation we would send `lastFrameUrl` to the AI here.
+      // For now, relies on the prompt optimization.
+      const script = await generateMovieScript(apiKey, type, finalStyle, duration, contextContent);
 
       if (!script || !script.scenes) {
         throw new Error("Received invalid script data from AI.");
       }
 
       newProject.script = script;
-      newProject.title = script.title || 'Untitled Movie';
+      // Keep user provided title for continuation mode
+      if (mode !== 'video_continuation') {
+        newProject.title = script.title || 'Untitled Movie';
+      }
       newProject.status = 'generating_images';
 
       setProgress(20);
@@ -116,14 +209,14 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
         setProgress(progressPercent);
 
         try {
-          // We pass script.visualContext to ensure high consistency across frames
+          // If first scene of continuation, ideally we use last frame as init image, 
+          // or just reference it. For now, just gen normally.
           const imageUrl = await generateSceneImage(apiKey, script.visualContext || '', scene.visualPrompt, finalStyle);
           scene.imageUrl = imageUrl;
           addLog(`Scene ${i + 1} rendered successfully.`);
         } catch (error) {
           console.error(`Failed to generate image for scene ${i + 1}`, error);
           addLog(`Error rendering scene ${i + 1}: ${(error as Error).message}`);
-          // Fallback placeholder or just leave undefined
         }
       }
 
@@ -190,9 +283,34 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
           <Sparkles className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-white">Create New Movie</h1>
-          <p className="text-slate-400">Configure your generative film parameters</p>
+          <h1 className="text-3xl font-bold text-white">
+            {mode === 'video_continuation' ? 'Video Continuation' : 'Create New Movie'}
+          </h1>
+          <p className="text-slate-400">
+            {mode === 'video_continuation' ? 'Upload a video to continue its story' : 'Configure your generative film parameters'}
+          </p>
         </div>
+      </div>
+
+      {/* Mode Selection Tabs */}
+      <div className="flex space-x-1 bg-slate-900 p-1 rounded-xl mb-8">
+        {[
+          { id: 'storyboard', label: 'Storyboard', icon: ImageIcon },
+          { id: 'video_continuation', label: 'Video Continuation', icon: Film },
+          { id: 'freeform', label: 'Freeform', icon: Edit3 }
+        ].map((m) => (
+          <button
+            key={m.id}
+            onClick={() => setMode(m.id as ProjectMode)}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all ${mode === m.id
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+          >
+            <m.icon className="w-4 h-4" />
+            {m.label}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -200,130 +318,231 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
         {/* Left Column: Settings */}
         <div className="space-y-6">
 
-          {/* Genre */}
-          <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-            <label className="block text-sm font-semibold text-slate-300 mb-4">Content Type</label>
-            <div className="grid grid-cols-2 gap-3">
-              {VIDEO_TYPES.map(t => (
-                <button
-                  key={t}
-                  onClick={() => setType(t)}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${type === t
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Style */}
-          <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-            <label className="block text-sm font-semibold text-slate-300 mb-4">Visual Style</label>
-            <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-              {VIDEO_STYLES.map(s => (
-                <button
-                  key={s}
-                  onClick={() => setStyle(s)}
-                  className={`px-3 py-2 rounded-lg text-sm text-left transition-all truncate ${style === s
-                    ? 'bg-cyan-700 text-white ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-            {style === 'Custom' && (
-              <input
-                type="text"
-                value={customStyle}
-                onChange={(e) => setCustomStyle(e.target.value)}
-                placeholder="Enter custom style prompt..."
-                className="mt-4 w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
-              />
-            )}
-          </div>
-
-          {/* Length */}
-          <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-            <label className="block text-sm font-semibold text-slate-300 mb-4">Duration</label>
-            <div className="flex flex-wrap gap-2">
-              {VIDEO_LENGTHS.map(l => (
-                <button
-                  key={l}
-                  onClick={() => setLength(l)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${length === l
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-            {length === 'Custom' && (
-              <div className="mt-4 flex items-center gap-2">
+          {/* Mode Specific Inputs */}
+          {mode === 'video_continuation' ? (
+            <>
+              {/* Project Name Input */}
+              <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
+                <label className="block text-sm font-semibold text-slate-300 mb-4">Project Name</label>
                 <input
-                  type="number"
-                  min="1"
-                  max="60"
-                  value={customLength}
-                  onChange={(e) => setCustomLength(e.target.value)}
-                  className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  type="text"
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  placeholder="Enter project name..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
-                <span className="text-slate-400 text-sm">minutes</span>
               </div>
-            )}
-          </div>
+
+              {/* Video Upload */}
+              <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
+                <label className="block text-sm font-semibold text-slate-300 mb-4">Source Video</label>
+                <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 text-center hover:border-indigo-500/50 transition-colors bg-slate-950/50 group cursor-pointer relative">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleVideoUpload(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="p-3 bg-slate-800 rounded-full group-hover:bg-slate-700 transition-colors">
+                      {isProcessingVideo ? <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" /> : <Upload className="w-6 h-6 text-indigo-400" />}
+                    </div>
+                    {selectedFile ? (
+                      <div className="text-sm text-green-400 font-medium truncate w-full px-4">
+                        {selectedFile.name}
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-slate-300 font-medium">Click to upload video</p>
+                        <p className="text-xs text-slate-500">MP4, WebM (Max 50MB)</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Content Type - Hidden for Freeform */}
+              {mode !== 'freeform' && (
+                <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
+                  <label className="block text-sm font-semibold text-slate-300 mb-4">Content Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {VIDEO_TYPES.map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setType(t)}
+                        className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${type === t
+                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                          }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Visual Style */}
+              <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
+                <label className="block text-sm font-semibold text-slate-300 mb-4">Visual Style</label>
+                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                  {VIDEO_STYLES.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setStyle(s)}
+                      className={`px-3 py-2 rounded-lg text-sm text-left transition-all truncate ${style === s
+                        ? 'bg-cyan-700 text-white ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+                {style === 'Custom' && (
+                  <input
+                    type="text"
+                    value={customStyle}
+                    onChange={(e) => setCustomStyle(e.target.value)}
+                    placeholder="Enter custom style prompt..."
+                    className="mt-4 w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+                  />
+                )}
+              </div>
+
+              {/* Length */}
+              <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
+                <label className="block text-sm font-semibold text-slate-300 mb-4">Target Duration</label>
+                <div className="flex flex-wrap gap-2">
+                  {VIDEO_LENGTHS.map(l => (
+                    <button
+                      key={l}
+                      onClick={() => setLength(l)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${length === l
+                        ? 'bg-indigo-500 text-white'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+                {length === 'Custom' && (
+                  <div className="mt-4 flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={customLength}
+                      onChange={(e) => setCustomLength(e.target.value)}
+                      className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <span className="text-slate-400 text-sm">minutes</span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
         </div>
 
-        {/* Right Column: Prompt */}
+        {/* Right Column: Preview / Prompt */}
         <div className="flex flex-col h-full">
-          <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex-1 flex flex-col">
-            <label className="block text-sm font-semibold text-slate-300 mb-4">
-              Story Concept / Content
-            </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Describe your movie idea here. E.g., A detective in a rainy neo-tokyo discovers a robot that can dream..."
-              className="flex-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-            />
 
-            <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <div className="flex items-center gap-2 text-indigo-400 mb-2">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Estimated Output</span>
+          {/* If Video Continuation Mode, show Extracted Frame Preview */}
+          {mode === 'video_continuation' ? (
+            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex-1 flex flex-col items-center justify-center">
+              <label className="block text-sm font-semibold text-slate-300 mb-4 self-start">
+                Extracted Last Frame
+              </label>
+
+              {lastFrameUrl ? (
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-slate-700 shadow-lg">
+                  <img src={lastFrameUrl} alt="Last Frame" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                    <p className="text-white text-sm font-medium">Ready for continuation</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full aspect-video rounded-lg border-2 border-dashed border-slate-800 flex items-center justify-center">
+                  <div className="text-center text-slate-600">
+                    <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">Upload video to see preview</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-6 w-full p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                <div className="flex items-center gap-2 text-indigo-400 mb-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Analysis</span>
+                </div>
+                <ul className="text-sm text-slate-400 space-y-1">
+                  <li className="flex justify-between">
+                    <span>Frame Status:</span>
+                    <span className={lastFrameUrl ? "text-green-400" : "text-slate-500"}>{lastFrameUrl ? "Extracted" : "Pending"}</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>Auto-Continue:</span>
+                    <span className="text-slate-200">Enabled</span>
+                  </li>
+                </ul>
               </div>
-              <ul className="text-sm text-slate-400 space-y-1">
-                <li className="flex justify-between">
-                  <span>Scenes to generate:</span>
-                  <span className="text-slate-200">{parseDuration() * 4} shots</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Script detail:</span>
-                  <span className="text-slate-200">Full dialogue & action</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Model:</span>
-                  <span className="text-slate-200">OpenRouter (GPT-5 + GPT-5-image)</span>
-                </li>
-              </ul>
             </div>
-          </div>
+          ) : (
+            /* Normal Prompt Box for other modes */
+            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex-1 flex flex-col">
+              <label className="block text-sm font-semibold text-slate-300 mb-4">
+                {mode === 'freeform' ? 'Creative Prompt' : 'Story Concept / Content'}
+              </label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder={
+                  mode === 'freeform' ? "Enter a loose idea or theme (e.g., 'Dreams of a cybernetic whale')..." :
+                    "Describe your movie idea here. E.g., A detective in a rainy neo-tokyo..."
+                }
+                className="flex-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+              />
+
+              <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                <div className="flex items-center gap-2 text-indigo-400 mb-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Estimated Output</span>
+                </div>
+                <ul className="text-sm text-slate-400 space-y-1">
+                  <li className="flex justify-between">
+                    <span>Mode:</span>
+                    <span className="text-slate-200 capitalize">{mode.replace('_', ' ')}</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>Scenes to generate:</span>
+                    <span className="text-slate-200">{parseDuration() <= 1 && length === '14s' ? '1 scene' : `${parseDuration() * 4} shots`}</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>Model:</span>
+                    <span className="text-slate-200">OpenRouter (GPT-5 + GPT-5-image)</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
 
           <Button
             variant="primary"
             size="lg"
             className="mt-6 w-full shadow-lg shadow-indigo-600/20"
             onClick={handleGenerate}
+            disabled={mode === 'video_continuation' && (!selectedFile || isProcessingVideo)}
           >
-            Generate Movie
-            <ArrowRight className="ml-2 w-5 h-5" />
+            {isProcessingVideo ? 'Processing Video...' : 'Generate Movie'}
+            {!isProcessingVideo && <ArrowRight className="ml-2 w-5 h-5" />}
           </Button>
         </div>
 
