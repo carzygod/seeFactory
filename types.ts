@@ -1,6 +1,6 @@
 export type VideoType = 'Action' | 'Racing' | 'Artistic' | 'Other';
 export type VideoStyle = 'Cyberpunk' | 'Sketch' | 'Comic' | 'Shaw Brothers' | 'Chaplin Silent' | 'Old American Comic' | 'Realistic' | 'Custom';
-export type VideoLength = '1min' | '2min' | '3min' | '5min' | '10min' | '20min' | '30min' | 'Custom';
+export type VideoLength = '14s' | '1min' | '2min' | '3min' | '5min' | '10min' | '20min' | '30min' | 'Custom';
 
 export interface SceneFrame {
   id: string;

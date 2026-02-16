@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { VideoType, VideoStyle, VideoLength, Project } from '../types';
 import { Button } from './Button';
-import { generateMovieScript, generateSceneImage } from '../services/geminiService';
+import { generateMovieScript, generateSceneImage } from '../services/aiService';
 import { Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 interface NewProjectProps {
@@ -11,14 +11,14 @@ interface NewProjectProps {
 
 const VIDEO_TYPES: VideoType[] = ['Action', 'Racing', 'Artistic', 'Other'];
 const VIDEO_STYLES: VideoStyle[] = ['Cyberpunk', 'Sketch', 'Comic', 'Shaw Brothers', 'Chaplin Silent', 'Old American Comic', 'Realistic', 'Custom'];
-const VIDEO_LENGTHS: VideoLength[] = ['1min', '2min', '3min', '5min', '10min', '20min', '30min', 'Custom'];
+const VIDEO_LENGTHS: VideoLength[] = ['14s', '1min', '2min', '3min', '5min', '10min', '20min', '30min', 'Custom'];
 
 // Simple UUID fallback for non-secure contexts
 const generateId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
@@ -26,15 +26,15 @@ const generateId = () => {
 
 export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated }) => {
   const [step, setStep] = useState<'input' | 'processing'>('input');
-  
+
   // Form State
   const [type, setType] = useState<VideoType>('Action');
   const [style, setStyle] = useState<VideoStyle>('Cyberpunk');
   const [customStyle, setCustomStyle] = useState('');
-  const [length, setLength] = useState<VideoLength>('1min');
+  const [length, setLength] = useState<VideoLength>('14s');
   const [customLength, setCustomLength] = useState<string>('1');
   const [content, setContent] = useState('');
-  
+
   // Processing State
   const [processingStatus, setProcessingStatus] = useState<string>('Initializing...');
   const [progress, setProgress] = useState(0);
@@ -44,6 +44,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
 
   const parseDuration = (): number => {
     if (length === 'Custom') return parseInt(customLength) || 1;
+    if (length === '14s') return 0.25; // Treat as fraction of minute for logic, service handles it
     return parseInt(length.replace('min', ''));
   };
 
@@ -84,10 +85,10 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
 
       // 1. Generate Script
       setProcessingStatus('Drafting Script & Storyboard...');
-      addLog('Contacting Screenwriter Agent (Gemini 3 Pro)...');
-      
+      addLog('Contacting Screenwriter Agent (OpenRouter / GPT-5)...');
+
       const script = await generateMovieScript(apiKey, type, finalStyle, duration, content);
-      
+
       if (!script || !script.scenes) {
         throw new Error("Received invalid script data from AI.");
       }
@@ -95,9 +96,10 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       newProject.script = script;
       newProject.title = script.title || 'Untitled Movie';
       newProject.status = 'generating_images';
-      
+
       setProgress(20);
       setProcessingStatus(`Script "${script.title}" generated. Starting visual production...`);
+
       addLog(`Script generated with ${script.scenes.length} scenes.`);
       if (script.visualContext) {
         addLog(`Visual Context established: ${script.visualContext.substring(0, 60)}...`);
@@ -105,21 +107,21 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
 
       // 2. Generate Images
       const totalScenes = script.scenes.length;
-      
+
       for (let i = 0; i < totalScenes; i++) {
         const scene = script.scenes[i];
         const progressPercent = 20 + Math.floor(((i + 1) / totalScenes) * 80);
-        
+
         setProcessingStatus(`Rendering Scene ${i + 1} of ${totalScenes}...`);
         setProgress(progressPercent);
-        
+
         try {
           // We pass script.visualContext to ensure high consistency across frames
           const imageUrl = await generateSceneImage(apiKey, script.visualContext || '', scene.visualPrompt, finalStyle);
           scene.imageUrl = imageUrl;
           addLog(`Scene ${i + 1} rendered successfully.`);
         } catch (error) {
-          console.error(`Failed to generate image for scene ${i+1}`, error);
+          console.error(`Failed to generate image for scene ${i + 1}`, error);
           addLog(`Error rendering scene ${i + 1}: ${(error as Error).message}`);
           // Fallback placeholder or just leave undefined
         }
@@ -148,13 +150,13 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       <div className="max-w-3xl mx-auto mt-10 p-8 bg-slate-900 border border-slate-800 rounded-2xl">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-900/50 text-indigo-400 mb-4 relative">
-             <Sparkles className={`w-8 h-8 ${progress < 100 ? 'animate-pulse' : ''}`} />
-             <div className="absolute inset-0 rounded-full border-2 border-indigo-500/30 animate-ping opacity-20"></div>
+            <Sparkles className={`w-8 h-8 ${progress < 100 ? 'animate-pulse' : ''}`} />
+            <div className="absolute inset-0 rounded-full border-2 border-indigo-500/30 animate-ping opacity-20"></div>
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">{processingStatus}</h2>
           <div className="w-full bg-slate-800 rounded-full h-2.5 mt-4 overflow-hidden">
-            <div 
-              className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-out" 
+            <div
+              className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
@@ -171,11 +173,11 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
           ))}
           {progress < 100 && <div className="animate-pulse">_</div>}
         </div>
-        
+
         {processingStatus === 'Error Occurred' && (
-           <div className="mt-6 text-center">
-             <Button variant="secondary" onClick={() => setStep('input')}>Back to Editor</Button>
-           </div>
+          <div className="mt-6 text-center">
+            <Button variant="secondary" onClick={() => setStep('input')}>Back to Editor</Button>
+          </div>
         )}
       </div>
     );
@@ -194,10 +196,10 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
+
         {/* Left Column: Settings */}
         <div className="space-y-6">
-          
+
           {/* Genre */}
           <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
             <label className="block text-sm font-semibold text-slate-300 mb-4">Content Type</label>
@@ -206,11 +208,10 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
                 <button
                   key={t}
                   onClick={() => setType(t)}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    type === t 
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' 
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                  }`}
+                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${type === t
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    }`}
                 >
                   {t}
                 </button>
@@ -226,11 +227,10 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
                 <button
                   key={s}
                   onClick={() => setStyle(s)}
-                  className={`px-3 py-2 rounded-lg text-sm text-left transition-all truncate ${
-                    style === s 
-                      ? 'bg-cyan-700 text-white ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900' 
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                  }`}
+                  className={`px-3 py-2 rounded-lg text-sm text-left transition-all truncate ${style === s
+                    ? 'bg-cyan-700 text-white ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    }`}
                 >
                   {s}
                 </button>
@@ -255,19 +255,18 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
                 <button
                   key={l}
                   onClick={() => setLength(l)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    length === l 
-                      ? 'bg-indigo-500 text-white' 
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                  }`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${length === l
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    }`}
                 >
                   {l}
                 </button>
               ))}
             </div>
-             {length === 'Custom' && (
+            {length === 'Custom' && (
               <div className="mt-4 flex items-center gap-2">
-                 <input
+                <input
                   type="number"
                   min="1"
                   max="60"
@@ -284,7 +283,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
 
         {/* Right Column: Prompt */}
         <div className="flex flex-col h-full">
-           <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex-1 flex flex-col">
+          <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex-1 flex flex-col">
             <label className="block text-sm font-semibold text-slate-300 mb-4">
               Story Concept / Content
             </label>
@@ -294,7 +293,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
               placeholder="Describe your movie idea here. E.g., A detective in a rainy neo-tokyo discovers a robot that can dream..."
               className="flex-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
             />
-            
+
             <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
               <div className="flex items-center gap-2 text-indigo-400 mb-2">
                 <CheckCircle2 className="w-4 h-4" />
@@ -309,23 +308,23 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
                   <span>Script detail:</span>
                   <span className="text-slate-200">Full dialogue & action</span>
                 </li>
-                 <li className="flex justify-between">
+                <li className="flex justify-between">
                   <span>Model:</span>
-                  <span className="text-slate-200">Gemini 3 Pro + Imagen</span>
+                  <span className="text-slate-200">OpenRouter (GPT-5 + GPT-5-image)</span>
                 </li>
               </ul>
             </div>
-           </div>
+          </div>
 
-           <Button 
-            variant="primary" 
-            size="lg" 
+          <Button
+            variant="primary"
+            size="lg"
             className="mt-6 w-full shadow-lg shadow-indigo-600/20"
             onClick={handleGenerate}
-           >
+          >
             Generate Movie
             <ArrowRight className="ml-2 w-5 h-5" />
-           </Button>
+          </Button>
         </div>
 
       </div>

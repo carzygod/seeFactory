@@ -9,12 +9,12 @@ import { getProjects, saveProject, deleteProject } from './utils/db';
 
 // Mock Profile Component
 const Profile = () => (
-    <div className="flex items-center justify-center h-full text-slate-500">
-        <div className="text-center">
-            <h2 className="text-2xl font-bold mb-2">User Profile</h2>
-            <p>Coming Soon</p>
-        </div>
+  <div className="flex items-center justify-center h-full text-slate-500">
+    <div className="text-center">
+      <h2 className="text-2xl font-bold mb-2">User Profile</h2>
+      <p>Coming Soon</p>
     </div>
+  </div>
 );
 
 function App() {
@@ -51,40 +51,40 @@ function App() {
   const handleProjectCreated = async (newProject: Project) => {
     // Save to DB
     try {
-        await saveProject(newProject);
-        // Refresh local list
-        setProjects([newProject, ...projects]);
-        setSelectedProject(newProject);
-        setCurrentView('project-detail');
+      await saveProject(newProject);
+      // Refresh local list
+      setProjects([newProject, ...projects]);
+      setSelectedProject(newProject);
+      setCurrentView('project-detail');
     } catch (e) {
-        console.error("Failed to save project", e);
-        alert("Failed to save project. Database error.");
+      console.error("Failed to save project", e);
+      alert("Failed to save project. Database error.");
     }
   };
 
   const handleDeleteProject = async (id: string) => {
-      if(window.confirm("Are you sure you want to delete this project?")) {
-        try {
-            await deleteProject(id);
-            const updated = projects.filter(p => p.id !== id);
-            setProjects(updated);
-            
-            if (selectedProject?.id === id) {
-                setSelectedProject(null);
-                setCurrentView('projects');
-            }
-        } catch(e) {
-            console.error("Delete failed", e);
+    if (window.confirm("Are you sure you want to delete this project?")) {
+      try {
+        await deleteProject(id);
+        const updated = projects.filter(p => p.id !== id);
+        setProjects(updated);
+
+        if (selectedProject?.id === id) {
+          setSelectedProject(null);
+          setCurrentView('projects');
         }
+      } catch (e) {
+        console.error("Delete failed", e);
       }
+    }
   }
 
   const renderContent = () => {
     if (currentView === 'project-detail' && selectedProject) {
       return (
-        <ProjectDetail 
-          project={selectedProject} 
-          onBack={() => setCurrentView('projects')} 
+        <ProjectDetail
+          project={selectedProject}
+          onBack={() => setCurrentView('projects')}
         />
       );
     }
@@ -94,8 +94,8 @@ function App() {
         return <NewProject apiKey={apiKey} onProjectCreated={handleProjectCreated} />;
       case 'projects':
         return (
-          <ProjectList 
-            projects={projects} 
+          <ProjectList
+            projects={projects}
             onSelectProject={(p) => {
               setSelectedProject(p);
               setCurrentView('project-detail');
@@ -115,10 +115,10 @@ function App() {
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-50">
       <Sidebar currentView={currentView} onNavigate={(view) => {
-          setCurrentView(view);
-          if (view !== 'project-detail') setSelectedProject(null);
+        setCurrentView(view);
+        if (view !== 'project-detail') setSelectedProject(null);
       }} />
-      
+
       <main className="flex-1 ml-64 min-h-screen transition-all duration-300 ease-in-out">
         {renderContent()}
       </main>

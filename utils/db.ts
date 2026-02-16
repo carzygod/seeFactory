@@ -30,3 +30,5 @@ export const deleteProject = async (id: string) => {
   const db = await initDB();
   return db.delete(STORE_NAME, id);
 };
+
+// End of file
