@@ -1,19 +1,80 @@
 import React, { useState } from 'react';
 import { Project, SceneFrame } from '../types';
 import { Button } from './Button';
-import { ArrowLeft, Play, LayoutGrid, List, Download } from 'lucide-react';
+import { ArrowLeft, Play, LayoutGrid, List, Download, Plus, Video, Loader2 } from 'lucide-react';
 
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
+  onUpdateProject?: (project: Project) => void;
 }
 
-export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
+export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdateProject }) => {
   const [viewMode, setViewMode] = useState<'storyboard' | 'script'>('storyboard');
   const [selectedScene, setSelectedScene] = useState<SceneFrame | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isProcessingVideo, setIsProcessingVideo] = useState(false);
 
   if (!project.script) return <div>Data missing</div>;
+
+  const handleManualVideoUpload = (file: File) => {
+    setIsProcessingVideo(true);
+
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = URL.createObjectURL(file);
+    video.muted = true;
+
+    video.onloadedmetadata = () => {
+      video.currentTime = Math.max(0, video.duration - 0.1);
+    };
+
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg');
+
+          // Create new scene
+          const newScene: SceneFrame = {
+            id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+            timeStart: "00:00", // In real app, calculate offset
+            timeEnd: "00:05",
+            description: `Continuation segment from video: ${file.name}`,
+            cameraMovement: "Static",
+            visualPrompt: "Manual extension",
+            imageUrl: dataUrl
+          };
+
+          // Update project
+          if (onUpdateProject) {
+            const updatedProject = { ...project };
+            if (updatedProject.script) {
+              updatedProject.script.scenes = [...updatedProject.script.scenes, newScene];
+            }
+            onUpdateProject(updatedProject);
+          }
+
+          setIsProcessingVideo(false);
+          URL.revokeObjectURL(video.src);
+        }
+      } catch (e) {
+        console.error("Frame extraction error", e);
+        alert("Failed to extract frame.");
+        setIsProcessingVideo(false);
+      }
+    };
+
+    video.onerror = () => {
+      alert("Error loading video.");
+      setIsProcessingVideo(false);
+    };
+  };
+
 
   return (
     <div className="h-full flex flex-col bg-slate-950 relative">
@@ -27,13 +88,14 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             src={previewImage}
             alt="Full screen preview"
             className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
           />
           <button
             className="absolute top-4 right-4 text-white hover:text-red-400 p-2"
             onClick={() => setPreviewImage(null)}
           >
-            <Download className="w-8 h-8 rotate-45" /> {/* Using rotate-45 Download icon as close X if X is not available, or just text */}
-            <span className="text-4xl">&times;</span>
+            <Download className="w-8 h-8 rotate-45" />
+            <span className="sr-only">Close</span>
           </button>
         </div>
       )}
@@ -109,7 +171,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                         alt={`Scene ${idx + 1}`}
                         className="w-full h-full object-cover cursor-zoom-in"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent selecting scene when clicking image
+                          e.stopPropagation();
                           setPreviewImage(scene.imageUrl!);
                         }}
                       />
@@ -126,6 +188,29 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                   </div>
                 </div>
               ))}
+
+              {/* Add Next Step Card - ONLY for video_continuation mode */}
+              {project.mode === 'video_continuation' && onUpdateProject && (
+                <div className="bg-slate-900/50 border-2 border-dashed border-slate-800 rounded-xl overflow-hidden hover:border-indigo-500/50 hover:bg-slate-900 transition-all flex flex-col items-center justify-center min-h-[300px] cursor-pointer group relative">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleManualVideoUpload(e.target.files[0]);
+                      }
+                    }}
+                    disabled={isProcessingVideo}
+                  />
+                  <div className="p-4 rounded-full bg-slate-800 group-hover:bg-indigo-600/20 transition-colors mb-4">
+                    {isProcessingVideo ? <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" /> : <Plus className="w-8 h-8 text-indigo-400" />}
+                  </div>
+                  <h4 className="font-bold text-slate-200 mb-1">Add Next Step</h4>
+                  <p className="text-sm text-slate-500">Upload video to continue</p>
+                </div>
+              )}
+
             </div>
           ) : (
             <div className="max-w-4xl mx-auto bg-white text-black p-12 min-h-screen shadow-2xl font-serif">

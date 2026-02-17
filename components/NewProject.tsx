@@ -164,23 +164,43 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       };
 
       // 1. Generate Script
-      setProcessingStatus('Drafting Script & Storyboard...');
-      addLog('Contacting Screenwriter Agent (OpenRouter / GPT-5)...');
+      let script: any = null;
 
-      // Adjust prompt context based on mode
-      let contextContent = content;
       if (mode === 'video_continuation') {
-        contextContent = `[VIDEO CONTINUATION] The user provided a video titled "${titleInput}". Task: Continue the visual narrative immediately following this scene. The last frame is provided (implicitly). Use standard cinematic continuation techniques.`;
-      } else if (mode === 'freeform') {
-        contextContent = `[FREEFORM] Generate a creative starting point and subsequent narrative based on: ${content}`;
-      }
+        setProcessingStatus('Creating continuation project...');
+        addLog('Skipping AI generation based on manual continuation mode.');
 
-      // NOTE: In a real implementation we would send `lastFrameUrl` to the AI here.
-      // For now, relies on the prompt optimization.
-      const script = await generateMovieScript(apiKey, type, finalStyle, duration, contextContent);
+        script = {
+          title: titleInput,
+          logline: `Continuation of video project "${titleInput}"`,
+          visualContext: "Source video footage provided.",
+          characters: [],
+          acts: [{ title: "Act 1", content: "Manual continuation sequence." }],
+          scenes: [{
+            id: generateId(),
+            timeStart: "00:00",
+            timeEnd: "00:05",
+            description: "Initial frame from source video.",
+            cameraMovement: "Static",
+            visualPrompt: "Extracted frame",
+            imageUrl: lastFrameUrl || undefined
+          }]
+        };
+      } else {
+        setProcessingStatus('Drafting Script & Storyboard...');
+        addLog('Contacting Screenwriter Agent (OpenRouter / GPT-5)...');
 
-      if (!script || !script.scenes) {
-        throw new Error("Received invalid script data from AI.");
+        // Adjust prompt context based on mode
+        let contextContent = content;
+        if (mode === 'freeform') {
+          contextContent = `[FREEFORM] Generate a creative starting point and subsequent narrative based on: ${content}`;
+        }
+
+        script = await generateMovieScript(apiKey, type, finalStyle, duration, contextContent);
+
+        if (!script || !script.scenes) {
+          throw new Error("Received invalid script data from AI.");
+        }
       }
 
       newProject.script = script;
@@ -188,42 +208,48 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       if (mode !== 'video_continuation') {
         newProject.title = script.title || 'Untitled Movie';
       }
-      newProject.status = 'generating_images';
 
-      setProgress(20);
-      setProcessingStatus(`Script "${script.title}" generated. Starting visual production...`);
+      // If manual continuation, skip image generation entirely
+      if (mode === 'video_continuation') {
+        newProject.status = 'completed';
+        newProject.progress = 100;
+        setProcessingStatus('Project initialized. Ready for manual extension.');
+        addLog('Project saved successfully.');
+      } else {
+        newProject.status = 'generating_images';
+        setProgress(20);
+        setProcessingStatus(`Script "${script.title}" generated. Starting visual production...`);
 
-      addLog(`Script generated with ${script.scenes.length} scenes.`);
-      if (script.visualContext) {
-        addLog(`Visual Context established: ${script.visualContext.substring(0, 60)}...`);
-      }
-
-      // 2. Generate Images
-      const totalScenes = script.scenes.length;
-
-      for (let i = 0; i < totalScenes; i++) {
-        const scene = script.scenes[i];
-        const progressPercent = 20 + Math.floor(((i + 1) / totalScenes) * 80);
-
-        setProcessingStatus(`Rendering Scene ${i + 1} of ${totalScenes}...`);
-        setProgress(progressPercent);
-
-        try {
-          // If first scene of continuation, ideally we use last frame as init image, 
-          // or just reference it. For now, just gen normally.
-          const imageUrl = await generateSceneImage(apiKey, script.visualContext || '', scene.visualPrompt, finalStyle);
-          scene.imageUrl = imageUrl;
-          addLog(`Scene ${i + 1} rendered successfully.`);
-        } catch (error) {
-          console.error(`Failed to generate image for scene ${i + 1}`, error);
-          addLog(`Error rendering scene ${i + 1}: ${(error as Error).message}`);
+        addLog(`Script generated with ${script.scenes.length} scenes.`);
+        if (script.visualContext) {
+          addLog(`Visual Context established: ${script.visualContext.substring(0, 60)}...`);
         }
-      }
 
-      newProject.status = 'completed';
-      newProject.progress = 100;
-      setProcessingStatus('Production Complete! Saving to Database...');
-      addLog('All scenes rendered. Saving...');
+        // 2. Generate Images
+        const totalScenes = script.scenes.length;
+
+        for (let i = 0; i < totalScenes; i++) {
+          const scene = script.scenes[i];
+          const progressPercent = 20 + Math.floor(((i + 1) / totalScenes) * 80);
+
+          setProcessingStatus(`Rendering Scene ${i + 1} of ${totalScenes}...`);
+          setProgress(progressPercent);
+
+          try {
+            const imageUrl = await generateSceneImage(apiKey, script.visualContext || '', scene.visualPrompt, finalStyle);
+            scene.imageUrl = imageUrl;
+            addLog(`Scene ${i + 1} rendered successfully.`);
+          } catch (error) {
+            console.error(`Failed to generate image for scene ${i + 1}`, error);
+            addLog(`Error rendering scene ${i + 1}: ${(error as Error).message}`);
+          }
+        }
+
+        newProject.status = 'completed';
+        newProject.progress = 100;
+        setProcessingStatus('Production Complete! Saving to Database...');
+        addLog('All scenes rendered. Saving...');
+      }
 
       // Save and Redirect
       // Small delay to let user see "Complete"
@@ -303,8 +329,8 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
             key={m.id}
             onClick={() => setMode(m.id as ProjectMode)}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all ${mode === m.id
-                ? 'bg-slate-800 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              ? 'bg-slate-800 text-white shadow-sm'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
           >
             <m.icon className="w-4 h-4" />

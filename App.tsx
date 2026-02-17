@@ -79,12 +79,26 @@ function App() {
     }
   }
 
+  const handleProjectUpdate = async (updatedProject: Project) => {
+    try {
+      await saveProject(updatedProject);
+      // Update local state
+      const updatedList = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
+      setProjects(updatedList);
+      setSelectedProject(updatedProject);
+    } catch (e) {
+      console.error("Failed to update project", e);
+      alert("Failed to update project.");
+    }
+  };
+
   const renderContent = () => {
     if (currentView === 'project-detail' && selectedProject) {
       return (
         <ProjectDetail
           project={selectedProject}
           onBack={() => setCurrentView('projects')}
+          onUpdateProject={handleProjectUpdate}
         />
       );
     }
