@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Project, ProjectMode } from '../types';
 import { Clock, Film, Trash2, Image as ImageIcon, Edit3, LayoutGrid } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ProjectListProps {
   projects: Project[];
@@ -9,6 +10,7 @@ interface ProjectListProps {
 }
 
 export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProject, onDeleteProject }) => {
+  const { t } = useTranslation();
   const [filterMode, setFilterMode] = useState<ProjectMode | 'all'>('all');
 
   const filteredProjects = filterMode === 'all'
@@ -16,15 +18,15 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
     : projects.filter(p => p.mode === filterMode || (!p.mode && filterMode === 'storyboard')); // Fallback for old projects
 
   const tabs = [
-    { id: 'all', label: 'All Projects', icon: LayoutGrid },
-    { id: 'storyboard', label: 'Storyboard', icon: ImageIcon },
-    { id: 'video_continuation', label: 'Video Continuation', icon: Film },
-    { id: 'freeform', label: 'Freeform', icon: Edit3 },
+    { id: 'all', label: t('projectList.tabs.all'), icon: LayoutGrid },
+    { id: 'storyboard', label: t('projectList.tabs.storyboard'), icon: ImageIcon },
+    { id: 'video_continuation', label: t('projectList.tabs.video_continuation'), icon: Film },
+    { id: 'freeform', label: t('projectList.tabs.freeform'), icon: Edit3 },
   ];
 
   return (
     <div className="p-8">
-      <h2 className="text-3xl font-bold mb-8 text-slate-100">My Projects</h2>
+      <h2 className="text-3xl font-bold mb-8 text-slate-100">{t('projectList.title')}</h2>
 
       {/* Filter Tabs */}
       <div className="flex space-x-2 mb-8 overflow-x-auto pb-2">
@@ -33,8 +35,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
             key={tab.id}
             onClick={() => setFilterMode(tab.id as ProjectMode | 'all')}
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${filterMode === tab.id
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
-                : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
+              : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'
               }`}
           >
             <tab.icon className="w-4 h-4" />
@@ -46,8 +48,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
       {filteredProjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-[50vh] text-slate-500">
           <Film className="w-16 h-16 mb-4 opacity-20" />
-          <h3 className="text-xl font-semibold mb-2">No Projects Found</h3>
-          <p>No projects match the selected filter.</p>
+          <h3 className="text-xl font-semibold mb-2">{t('projectList.empty.title')}</h3>
+          <p>{t('projectList.empty.desc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -74,7 +76,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
                 </div>
                 {/* Mode Badge */}
                 <div className="absolute bottom-2 left-2 bg-indigo-600/90 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                  {project.mode ? project.mode.replace('_', ' ') : 'Storyboard'}
+                  {project.mode ? t(`projectList.tabs.${project.mode}`) : t('projectList.tabs.storyboard')}
                 </div>
               </div>
 
@@ -94,10 +96,10 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
                   </div>
                   <div className="flex items-center gap-1">
                     <span className={`px-2 py-0.5 rounded-full ${project.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                        project.status === 'error' ? 'bg-red-500/20 text-red-400' :
-                          'bg-indigo-500/20 text-indigo-400'
+                      project.status === 'error' ? 'bg-red-500/20 text-red-400' :
+                        'bg-indigo-500/20 text-indigo-400'
                       }`}>
-                      {project.status.replace('_', ' ')}
+                      {t(`projectList.status.${project.status}`)}
                     </span>
                   </div>
                 </div>
@@ -108,7 +110,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
                   onDeleteProject(project.id);
                 }}
                 className="absolute top-2 left-2 p-2 bg-black/50 text-red-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 hover:text-red-300"
-                title="Delete Project"
+                title={t('projectList.deleteTitle')}
               >
                 <Trash2 className="w-4 h-4" />
               </button>

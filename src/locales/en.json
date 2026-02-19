@@ -1,0 +1,113 @@
+{
+    "sidebar": {
+        "newProject": "New Project",
+        "projects": "My Projects",
+        "settings": "Settings",
+        "profile": "Profile",
+        "systemOnline": "System Online"
+    },
+    "settings": {
+        "title": "Settings",
+        "apiKeyLabel": "OpenRouter API Key",
+        "apiKeyHelp": "Your key is stored locally in your browser. It is required to access OpenRouter (GPT-5).",
+        "noKeyWarning": "You must provide a valid OpenRouter API key to generate content.",
+        "saveSuccess": "Settings saved successfully!",
+        "saveButton": "Save Settings",
+        "languageLabel": "Language"
+    },
+    "projectList": {
+        "title": "My Projects",
+        "tabs": {
+            "all": "All Projects",
+            "storyboard": "Storyboard",
+            "video_continuation": "Video Continuation",
+            "freeform": "Freeform"
+        },
+        "empty": {
+            "title": "No Projects Found",
+            "desc": "No projects match the selected filter."
+        },
+        "status": {
+            "draft": "Draft",
+            "generating_script": "Generating Script",
+            "generating_images": "Generating Images",
+            "completed": "Completed",
+            "error": "Error"
+        },
+        "deleteTitle": "Delete Project"
+    },
+    "newProject": {
+        "title": "Create New Movie",
+        "subtitle": "Configure your generative film parameters",
+        "videoContinuationTitle": "Video Continuation",
+        "videoContinuationSubtitle": "Upload a video to continue its story",
+        "projectName": "Project Name",
+        "projectNamePlaceholder": "Enter project name...",
+        "sourceVideo": "Source Video",
+        "uploadPlaceholder": "Click to upload video",
+        "uploadFormat": "MP4, WebM (Max 50MB)",
+        "contentType": "Content Type",
+        "visualStyle": "Visual Style",
+        "customStylePlaceholder": "Enter custom style prompt...",
+        "targetDuration": "Target Duration",
+        "minutes": "minutes",
+        "extractedFrame": "Extracted Last Frame",
+        "readyForContinuation": "Ready for continuation",
+        "uploadToPreview": "Upload video to see preview",
+        "analysis": "Analysis",
+        "frameStatus": "Frame Status",
+        "autoContinue": "Auto-Continue",
+        "extracted": "Extracted",
+        "pending": "Pending",
+        "enabled": "Enabled",
+        "creativePrompt": "Creative Prompt",
+        "storyConcept": "Story Concept / Content",
+        "promptPlaceholderFreeform": "Enter a loose idea or theme (e.g., 'Dreams of a cybernetic whale')...",
+        "promptPlaceholderStory": "Describe your movie idea here. E.g., A detective in a rainy neo-tokyo...",
+        "estimatedOutput": "Estimated Output",
+        "scenesToGenerate": "Scenes to generate",
+        "model": "Model",
+        "generateButton": "Generate Movie",
+        "processingButton": "Processing Video...",
+        "initializing": "Initializing Studio...",
+        "productionComplete": "Production Complete! Saving to Database...",
+        "errorOccurred": "Error Occurred",
+        "backToEditor": "Back to Editor",
+        "doNotClose": "Finalizing and saving high-res images... Do not close.",
+        "projectInitialized": "Project initialized. Ready for manual extension.",
+        "projectSaved": "Project saved successfully.",
+        "validation": {
+            "apiKey": "Please configure your API Key in Settings first.",
+            "projectName": "Please enter a project name.",
+            "videoUpload": "Please upload a video file.",
+            "videoProcessing": "Please wait for video processing to complete.",
+            "content": "Please provide video content/instruction.",
+            "scriptError": "Received invalid script data from AI.",
+            "frameError": "Failed to extract frame from video.",
+            "videoLoadError": "Error loading video file."
+        }
+    },
+    "projectDetail": {
+        "exportPdf": "Export PDF",
+        "logline": "Logline",
+        "scene": "Scene",
+        "pending": "Pending...",
+        "sceneDetails": "Scene Details",
+        "timing": "Timing",
+        "action": "Action",
+        "camera": "Camera",
+        "visualPrompt": "Visual Prompt",
+        "by": "By",
+        "addNextStep": "Add Next Step",
+        "uploadToContinue": "Upload video to continue",
+        "extIntScene": "EXT/INT. SCENE"
+    },
+    "common": {
+        "back": "Back",
+        "loading": "Loading...",
+        "error": "Error",
+        "mode": "Mode",
+        "shots": "shots",
+        "scene": "scene"
+    }
+}

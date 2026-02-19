@@ -1,0 +1,113 @@
+{
+    "sidebar": {
+        "newProject": "Новый проект",
+        "projects": "Мои проекты",
+        "settings": "Настройки",
+        "profile": "Профиль",
+        "systemOnline": "Система онлайн"
+    },
+    "settings": {
+        "title": "Настройки",
+        "apiKeyLabel": "API ключ OpenRouter",
+        "apiKeyHelp": "Ваш ключ хранится локально в браузере. Он необходим для доступа к OpenRouter (GPT-5).",
+        "noKeyWarning": "Вы должны предоставить действующий API ключ OpenRouter для генерации контента.",
+        "saveSuccess": "Настройки сохранены!",
+        "saveButton": "Сохранить настройки",
+        "languageLabel": "Язык"
+    },
+    "projectList": {
+        "title": "Мои проекты",
+        "tabs": {
+            "all": "Все проекты",
+            "storyboard": "Раскадровка",
+            "video_continuation": "Продолжение видео",
+            "freeform": "Свободная форма"
+        },
+        "empty": {
+            "title": "Проекты не найдены",
+            "desc": "Нет проектов, соответствующих выбранному фильтру."
+        },
+        "status": {
+            "draft": "Черновик",
+            "generating_script": "Генерация сценария",
+            "generating_images": "Генерация изображений",
+            "completed": "Завершено",
+            "error": "Ошибка"
+        },
+        "deleteTitle": "Удалить проект"
+    },
+    "newProject": {
+        "title": "Создать новый фильм",
+        "subtitle": "Настройте параметры генеративного фильма",
+        "videoContinuationTitle": "Продолжение видео",
+        "videoContinuationSubtitle": "Загрузите видео, чтобы продолжить его историю",
+        "projectName": "Название проекта",
+        "projectNamePlaceholder": "Введите название проекта...",
+        "sourceVideo": "Исходное видео",
+        "uploadPlaceholder": "Нажмите для загрузки видео",
+        "uploadFormat": "MP4, WebM (Макс. 50MB)",
+        "contentType": "Тип контента",
+        "visualStyle": "Визуальный стиль",
+        "customStylePlaceholder": "Введите свое описание стиля...",
+        "targetDuration": "Целевая длительность",
+        "minutes": "минут",
+        "extractedFrame": "Извлеченный кадр",
+        "readyForContinuation": "Готово к продолжению",
+        "uploadToPreview": "Загрузите видео для предпросмотра",
+        "analysis": "Анализ",
+        "frameStatus": "Статус кадра",
+        "autoContinue": "Авто-продолжение",
+        "extracted": "Извлечено",
+        "pending": "Ожидание",
+        "enabled": "Включено",
+        "creativePrompt": "Творческий запрос",
+        "storyConcept": "Концепция истории / Контент",
+        "promptPlaceholderFreeform": "Введите идею или тему (например, «Сны кибер-кита»)...",
+        "promptPlaceholderStory": "Опишите свою идею фильма здесь. Например: Детектив в дождливом нео-Токио...",
+        "estimatedOutput": "Ожидаемый результат",
+        "scenesToGenerate": "Сцен для генерации",
+        "model": "Модель",
+        "generateButton": "Создать фильм",
+        "processingButton": "Обработка видео...",
+        "initializing": "Инициализация студии...",
+        "productionComplete": "Производство завершено! Сохранение в базу данных...",
+        "errorOccurred": "Произошла ошибка",
+        "backToEditor": "Назад в редактор",
+        "doNotClose": "Финализация и сохранение изображений... Не закрывайте.",
+        "projectInitialized": "Проект инициализирован. Готово к ручному расширению.",
+        "projectSaved": "Проект успешно сохранен.",
+        "validation": {
+            "apiKey": "Пожалуйста, сначала настройте API ключ в настройках.",
+            "projectName": "Пожалуйста, введите название проекта.",
+            "videoUpload": "Пожалуйста, загрузите видео файл.",
+            "videoProcessing": "Пожалуйста, подождите завершения обработки видео.",
+            "content": "Пожалуйста, предоставьте описание контента / инструкцию.",
+            "scriptError": "Получены неверные данные сценария от ИИ.",
+            "frameError": "Не удалось извлечь кадр из видео.",
+            "videoLoadError": "Ошибка загрузки видео файла."
+        }
+    },
+    "projectDetail": {
+        "exportPdf": "Экспорт в PDF",
+        "logline": "логлайн",
+        "scene": "Сцена",
+        "pending": "Ожидание...",
+        "sceneDetails": "Детали сцены",
+        "timing": "Тайминг",
+        "action": "Действие",
+        "camera": "Камера",
+        "visualPrompt": "Визуальный запрос",
+        "by": "Автор",
+        "addNextStep": "Добавить шаг",
+        "uploadToContinue": "Загрузить видео для продолжения",
+        "extIntScene": "ЭКСТ/ИНТ. СЦЕНА"
+    },
+    "common": {
+        "back": "Назад",
+        "loading": "Загрузка...",
+        "error": "Ошибка",
+        "mode": "Режим",
+        "shots": "кадров",
+        "scene": "сцена"
+    }
+}

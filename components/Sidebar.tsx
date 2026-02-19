@@ -1,5 +1,6 @@
 import React from 'react';
 import { Film, Plus, Settings, FolderOpen, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface SidebarProps {
   currentView: string;
@@ -7,11 +8,13 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
+  const { t } = useTranslation();
+
   const navItems = [
-    { id: 'new', label: 'New Project', icon: Plus },
-    { id: 'projects', label: 'My Projects', icon: FolderOpen },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'new', label: t('sidebar.newProject'), icon: Plus },
+    { id: 'projects', label: t('sidebar.projects'), icon: FolderOpen },
+    { id: 'settings', label: t('sidebar.settings'), icon: Settings },
+    { id: 'profile', label: t('sidebar.profile'), icon: User },
   ];
 
   return (

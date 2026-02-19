@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './Button';
-import { Key, Save, AlertTriangle } from 'lucide-react';
+import { Key, Save, AlertTriangle, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface SettingsProps {
   apiKey: string;
   onSave: (key: string) => void;
 }
 
+const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'zh-CN', label: 'Ask (Simplified)' },
+  { code: 'zh-TW', label: 'Ask (Traditional)' },
+  { code: 'ru', label: 'Русский' }
+];
+
 export const Settings: React.FC<SettingsProps> = ({ apiKey, onSave }) => {
+  const { t, i18n } = useTranslation();
   const [keyInput, setKeyInput] = useState(apiKey);
   const [saved, setSaved] = useState(false);
 
@@ -21,18 +30,45 @@ export const Settings: React.FC<SettingsProps> = ({ apiKey, onSave }) => {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-8 mt-10">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
         <div className="flex items-center gap-3 mb-6 border-b border-slate-800 pb-4">
           <SettingsIcon className="w-8 h-8 text-indigo-500" />
-          <h2 className="text-2xl font-bold text-white">Settings</h2>
+          <h2 className="text-2xl font-bold text-white">{t('settings.title')}</h2>
         </div>
 
         <div className="space-y-6">
+          {/* Language Selector */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              OpenRouter API Key
+              {t('settings.languageLabel')}
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Globe className="h-5 w-5 text-slate-500" />
+              </div>
+              <select
+                value={i18n.language}
+                onChange={(e) => changeLanguage(e.target.value)}
+                className="block w-full pl-10 pr-3 py-3 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-100 transition-all appearance-none"
+              >
+                {LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              {t('settings.apiKeyLabel')}
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -47,7 +83,7 @@ export const Settings: React.FC<SettingsProps> = ({ apiKey, onSave }) => {
               />
             </div>
             <p className="mt-2 text-sm text-slate-500">
-              Your key is stored locally in your browser. It is required to access OpenRouter (GPT-5).
+              {t('settings.apiKeyHelp')}
             </p>
           </div>
 
@@ -55,18 +91,18 @@ export const Settings: React.FC<SettingsProps> = ({ apiKey, onSave }) => {
             <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-200">
               <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <p className="text-sm">
-                You must provide a valid OpenRouter API key to generate content.
+                {t('settings.noKeyWarning')}
               </p>
             </div>
           )}
 
           <div className="flex items-center justify-between pt-4">
             <span className={`text-sm font-medium text-green-400 transition-opacity ${saved ? 'opacity-100' : 'opacity-0'}`}>
-              Settings saved successfully!
+              {t('settings.saveSuccess')}
             </span>
             <Button onClick={handleSave} className="flex items-center gap-2">
               <Save className="w-4 h-4" />
-              Save Settings
+              {t('settings.saveButton')}
             </Button>
           </div>
         </div>

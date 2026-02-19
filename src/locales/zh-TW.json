@@ -1,0 +1,113 @@
+{
+    "sidebar": {
+        "newProject": "新增專案",
+        "projects": "我的專案",
+        "settings": "設定",
+        "profile": "個人資料",
+        "systemOnline": "系統在線"
+    },
+    "settings": {
+        "title": "設定",
+        "apiKeyLabel": "OpenRouter API 金鑰",
+        "apiKeyHelp": "您的金鑰僅儲存在本地瀏覽器中。需要它來存取 OpenRouter (GPT-5)。",
+        "noKeyWarning": "您必須提供有效的 OpenRouter API 金鑰才能生成內容。",
+        "saveSuccess": "設定已儲存！",
+        "saveButton": "儲存設定",
+        "languageLabel": "語言"
+    },
+    "projectList": {
+        "title": "我的專案",
+        "tabs": {
+            "all": "所有專案",
+            "storyboard": "故事板",
+            "video_continuation": "視頻續寫",
+            "freeform": "自由創作"
+        },
+        "empty": {
+            "title": "未找到專案",
+            "desc": "沒有符合篩選條件的專案。"
+        },
+        "status": {
+            "draft": "草稿",
+            "generating_script": "生成劇本中",
+            "generating_images": "生成圖像中",
+            "completed": "已完成",
+            "error": "錯誤"
+        },
+        "deleteTitle": "刪除專案"
+    },
+    "newProject": {
+        "title": "創建新電影",
+        "subtitle": "配置您的生成式電影參數",
+        "videoContinuationTitle": "視頻續寫",
+        "videoContinuationSubtitle": "上傳視頻以延續其故事",
+        "projectName": "專案名稱",
+        "projectNamePlaceholder": "輸入專案名稱...",
+        "sourceVideo": "源視頻",
+        "uploadPlaceholder": "點擊上傳視頻",
+        "uploadFormat": "MP4, WebM (最大 50MB)",
+        "contentType": "內容類型",
+        "visualStyle": "視覺風格",
+        "customStylePlaceholder": "輸入自定義風格提示...",
+        "targetDuration": "目標時長",
+        "minutes": "分鐘",
+        "extractedFrame": "提取的尾幀",
+        "readyForContinuation": "準備續寫",
+        "uploadToPreview": "上傳視頻以預覽",
+        "analysis": "分析",
+        "frameStatus": "幀狀態",
+        "autoContinue": "自動續寫",
+        "extracted": "已提取",
+        "pending": "待處理",
+        "enabled": "已啟用",
+        "creativePrompt": "創意提示",
+        "storyConcept": "故事概念 / 內容",
+        "promptPlaceholderFreeform": "輸入一個大致的想法或主題（例如，「賽博鯨魚的夢」）...",
+        "promptPlaceholderStory": "在此描述您的電影想法。例如：雨夜新東京的偵探...",
+        "estimatedOutput": "預計輸出",
+        "scenesToGenerate": "生成場景數",
+        "model": "模型",
+        "generateButton": "生成電影",
+        "processingButton": "處理視頻中...",
+        "initializing": "正在初始化工作室...",
+        "productionComplete": "製作完成！正在保存到數據庫...",
+        "errorOccurred": "發生錯誤",
+        "backToEditor": "返回編輯器",
+        "doNotClose": "正在完成並保存高清圖像... 請勿關閉。",
+        "projectInitialized": "專案已初始化。準備手動擴展。",
+        "projectSaved": "專案保存成功。",
+        "validation": {
+            "apiKey": "請先在設定中配置您的 API 金鑰。",
+            "projectName": "請輸入專案名稱。",
+            "videoUpload": "請上傳視頻文件。",
+            "videoProcessing": "請等待視頻處理完成。",
+            "content": "請提供視頻內容/說明。",
+            "scriptError": "從 AI 接收到無效的劇本數據。",
+            "frameError": "無法從視頻中提取幀。",
+            "videoLoadError": "加載視頻文件時出錯。"
+        }
+    },
+    "projectDetail": {
+        "exportPdf": "導出 PDF",
+        "logline": "故事梗概",
+        "scene": "場景",
+        "pending": "待處理...",
+        "sceneDetails": "場景詳情",
+        "timing": "時間",
+        "action": "動作",
+        "camera": "運鏡",
+        "visualPrompt": "視覺提示",
+        "by": "作者",
+        "addNextStep": "添加下一步",
+        "uploadToContinue": "上傳視頻以繼續",
+        "extIntScene": "外/內景 場景"
+    },
+    "common": {
+        "back": "返回",
+        "loading": "載入中...",
+        "error": "錯誤",
+        "mode": "模式",
+        "shots": "鏡頭",
+        "scene": "場景"
+    }
+}

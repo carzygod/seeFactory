@@ -1,0 +1,113 @@
+{
+    "sidebar": {
+        "newProject": "新建项目",
+        "projects": "我的项目",
+        "settings": "设置",
+        "profile": "个人资料",
+        "systemOnline": "系统在线"
+    },
+    "settings": {
+        "title": "设置",
+        "apiKeyLabel": "OpenRouter API 密钥",
+        "apiKeyHelp": "您的密钥仅存储在本地浏览器中。需要它来访问 OpenRouter (GPT-5)。",
+        "noKeyWarning": "您必须提供有效的 OpenRouter API 密钥才能生成内容。",
+        "saveSuccess": "设置已保存！",
+        "saveButton": "保存设置",
+        "languageLabel": "语言"
+    },
+    "projectList": {
+        "title": "我的项目",
+        "tabs": {
+            "all": "所有项目",
+            "storyboard": "故事板",
+            "video_continuation": "视频续写",
+            "freeform": "自由创作"
+        },
+        "empty": {
+            "title": "未找到项目",
+            "desc": "没有符合筛选条件的项目。"
+        },
+        "status": {
+            "draft": "草稿",
+            "generating_script": "生成剧本中",
+            "generating_images": "生成图像中",
+            "completed": "已完成",
+            "error": "错误"
+        },
+        "deleteTitle": "删除项目"
+    },
+    "newProject": {
+        "title": "创建新电影",
+        "subtitle": "配置您的生成式电影参数",
+        "videoContinuationTitle": "视频续写",
+        "videoContinuationSubtitle": "上传视频以延续其故事",
+        "projectName": "项目名称",
+        "projectNamePlaceholder": "输入项目名称...",
+        "sourceVideo": "源视频",
+        "uploadPlaceholder": "点击上传视频",
+        "uploadFormat": "MP4, WebM (最大 50MB)",
+        "contentType": "内容类型",
+        "visualStyle": "视觉风格",
+        "customStylePlaceholder": "输入自定义风格提示...",
+        "targetDuration": "目标时长",
+        "minutes": "分钟",
+        "extractedFrame": "提取的尾帧",
+        "readyForContinuation": "准备续写",
+        "uploadToPreview": "上传视频以预览",
+        "analysis": "分析",
+        "frameStatus": "帧状态",
+        "autoContinue": "自动续写",
+        "extracted": "已提取",
+        "pending": "待处理",
+        "enabled": "已启用",
+        "creativePrompt": "创意提示",
+        "storyConcept": "故事概念 / 内容",
+        "promptPlaceholderFreeform": "输入一个大致的想法或主题（例如，“赛博鲸鱼的梦”）...",
+        "promptPlaceholderStory": "在此描述您的电影想法。例如：雨夜新东京的侦探...",
+        "estimatedOutput": "预计输出",
+        "scenesToGenerate": "生成场景数",
+        "model": "模型",
+        "generateButton": "生成电影",
+        "processingButton": "处理视频中...",
+        "initializing": "正在初始化工作室...",
+        "productionComplete": "制作完成！正在保存到数据库...",
+        "errorOccurred": "发生错误",
+        "backToEditor": "返回编辑器",
+        "doNotClose": "正在完成并保存高清图像... 请勿关闭。",
+        "projectInitialized": "项目已初始化。准备手动扩展。",
+        "projectSaved": "项目保存成功。",
+        "validation": {
+            "apiKey": "请先在设置中配置您的 API 密钥。",
+            "projectName": "请输入项目名称。",
+            "videoUpload": "请上传视频文件。",
+            "videoProcessing": "请等待视频处理完成。",
+            "content": "请提供视频内容/说明。",
+            "scriptError": "从 AI 接收到无效的剧本数据。",
+            "frameError": "无法从视频中提取帧。",
+            "videoLoadError": "加载视频文件时出错。"
+        }
+    },
+    "projectDetail": {
+        "exportPdf": "导出 PDF",
+        "logline": "故事梗概",
+        "scene": "场景",
+        "pending": "待处理...",
+        "sceneDetails": "场景详情",
+        "timing": "时间",
+        "action": "动作",
+        "camera": "运镜",
+        "visualPrompt": "视觉提示",
+        "by": "作者",
+        "addNextStep": "添加下一步",
+        "uploadToContinue": "上传视频以继续",
+        "extIntScene": "外/内景 场景"
+    },
+    "common": {
+        "back": "返回",
+        "loading": "加载中...",
+        "error": "错误",
+        "mode": "模式",
+        "shots": "镜头",
+        "scene": "场景"
+    }
+}

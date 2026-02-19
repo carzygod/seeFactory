@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Project, SceneFrame } from '../types';
 import { Button } from './Button';
 import { ArrowLeft, Play, LayoutGrid, List, Download, Plus, Video, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ProjectDetailProps {
   project: Project;
@@ -10,6 +11,7 @@ interface ProjectDetailProps {
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdateProject }) => {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'storyboard' | 'script'>('storyboard');
   const [selectedScene, setSelectedScene] = useState<SceneFrame | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -64,13 +66,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
         }
       } catch (e) {
         console.error("Frame extraction error", e);
-        alert("Failed to extract frame.");
+        alert(t('newProject.validation.frameError'));
         setIsProcessingVideo(false);
       }
     };
 
     video.onerror = () => {
-      alert("Error loading video.");
+      alert(t('newProject.validation.videoLoadError'));
       setIsProcessingVideo(false);
     };
   };
@@ -140,7 +142,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
           </div>
 
           <Button variant="secondary" size="sm" className="gap-2">
-            <Download className="w-4 h-4" /> Export PDF
+            <Download className="w-4 h-4" /> {t('projectDetail.exportPdf')}
           </Button>
         </div>
       </div>
@@ -152,7 +154,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
 
           {/* Synopsis Card */}
           <div className="mb-8 bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl border border-slate-700/50 shadow-xl">
-            <h3 className="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-2">Logline</h3>
+            <h3 className="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-2">{t('projectDetail.logline')}</h3>
             <p className="text-lg text-slate-200 italic font-serif leading-relaxed">"{project.script.logline}"</p>
           </div>
 
@@ -176,14 +178,14 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-700">Pending...</div>
+                      <div className="w-full h-full flex items-center justify-center text-slate-700">{t('projectDetail.pending')}</div>
                     )}
                     <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-mono pointer-events-none">
                       {scene.timeStart} - {scene.timeEnd}
                     </div>
                   </div>
                   <div className="p-4">
-                    <h4 className="font-bold text-slate-200 mb-1">Scene {idx + 1}</h4>
+                    <h4 className="font-bold text-slate-200 mb-1">{t('projectDetail.scene')} {idx + 1}</h4>
                     <p className="text-sm text-slate-400 line-clamp-3">{scene.description}</p>
                   </div>
                 </div>
@@ -206,8 +208,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
                   <div className="p-4 rounded-full bg-slate-800 group-hover:bg-indigo-600/20 transition-colors mb-4">
                     {isProcessingVideo ? <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" /> : <Plus className="w-8 h-8 text-indigo-400" />}
                   </div>
-                  <h4 className="font-bold text-slate-200 mb-1">Add Next Step</h4>
-                  <p className="text-sm text-slate-500">Upload video to continue</p>
+                  <h4 className="font-bold text-slate-200 mb-1">{t('projectDetail.addNextStep')}</h4>
+                  <p className="text-sm text-slate-500">{t('projectDetail.uploadToContinue')}</p>
                 </div>
               )}
 
@@ -217,7 +219,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
               <h1 className="text-4xl text-center font-bold mb-4 uppercase underline underline-offset-4">{project.title}</h1>
               <div className="text-center mb-12 flex flex-col items-center">
                 <img src="/logo.png" alt="Logo" className="w-12 h-12 mb-2 opacity-80" />
-                <p className="uppercase text-sm mb-1">By</p>
+                <p className="uppercase text-sm mb-1">{t('projectDetail.by')}</p>
                 <p className="font-bold">SeeFactory AI</p>
               </div>
 
@@ -233,11 +235,11 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
               {project.script.scenes.map((scene, i) => (
                 <div key={i} className="mb-6 font-mono text-sm">
                   <div className="font-bold uppercase mb-1">
-                    {i + 1}. EXT/INT. SCENE - {scene.timeStart}
+                    {i + 1}. {t('projectDetail.extIntScene')} - {scene.timeStart}
                   </div>
                   <p className="mb-2">{scene.description}</p>
                   <p className="italic text-gray-600 pl-4 border-l-2 border-gray-300">
-                    CAMERA: {scene.cameraMovement}
+                    {t('projectDetail.camera')}: {scene.cameraMovement}
                   </p>
                 </div>
               ))}
@@ -248,28 +250,28 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
         {/* Right Sidebar - Details Panel (only in storyboard mode) */}
         {viewMode === 'storyboard' && selectedScene && (
           <div className="w-80 bg-slate-900 border-l border-slate-800 p-6 overflow-y-auto hidden lg:block">
-            <h3 className="text-lg font-bold text-white mb-4">Scene Details</h3>
+            <h3 className="text-lg font-bold text-white mb-4">{t('projectDetail.sceneDetails')}</h3>
 
             <div className="space-y-6">
               <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase">Timing</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase">{t('projectDetail.timing')}</label>
                 <p className="text-slate-300 font-mono">{selectedScene.timeStart} - {selectedScene.timeEnd}</p>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase">Action</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase">{t('projectDetail.action')}</label>
                 <p className="text-slate-300 text-sm leading-relaxed">{selectedScene.description}</p>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase">Camera</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase">{t('projectDetail.camera')}</label>
                 <div className="mt-1 inline-block px-2 py-1 bg-slate-800 rounded text-xs text-indigo-300 border border-indigo-500/20">
                   {selectedScene.cameraMovement}
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase">Visual Prompt</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase">{t('projectDetail.visualPrompt')}</label>
                 <div className="mt-2 p-3 bg-slate-950 rounded border border-slate-800 text-xs text-slate-400 italic">
                   "{selectedScene.visualPrompt}"
                 </div>

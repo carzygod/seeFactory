@@ -3,6 +3,7 @@ import { VideoType, VideoStyle, VideoLength, Project, ProjectMode } from '../typ
 import { Button } from './Button';
 import { generateMovieScript, generateSceneImage } from '../services/aiService';
 import { Sparkles, ArrowRight, CheckCircle2, Film, Edit3, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface NewProjectProps {
   apiKey: string;
@@ -25,6 +26,7 @@ const generateId = () => {
 };
 
 export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState<'input' | 'processing'>('input');
 
   // Mode State
@@ -45,7 +47,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
   const [isProcessingVideo, setIsProcessingVideo] = useState(false);
 
   // Processing State
-  const [processingStatus, setProcessingStatus] = useState<string>('Initializing...');
+  const [processingStatus, setProcessingStatus] = useState<string>(t('newProject.initializing'));
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
 
@@ -89,40 +91,40 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
         }
       } catch (e) {
         console.error("Frame extraction error", e);
-        alert("Failed to extract frame from video.");
+        alert(t('newProject.validation.frameError'));
         setIsProcessingVideo(false);
       }
     };
 
     video.onerror = () => {
-      alert("Error loading video file.");
+      alert(t('newProject.validation.videoLoadError'));
       setIsProcessingVideo(false);
     };
   };
 
   const handleGenerate = async () => {
     if (!apiKey) {
-      alert("Please configure your API Key in Settings first.");
+      alert(t('newProject.validation.apiKey'));
       return;
     }
 
     // Validation
     if (mode === 'video_continuation') {
       if (!titleInput.trim()) {
-        alert("Please enter a project name.");
+        alert(t('newProject.validation.projectName'));
         return;
       }
       if (!selectedFile) {
-        alert("Please upload a video file.");
+        alert(t('newProject.validation.videoUpload'));
         return;
       }
       if (isProcessingVideo) {
-        alert("Please wait for video processing to complete.");
+        alert(t('newProject.validation.videoProcessing'));
         return;
       }
     } else {
       if (!content.trim()) {
-        alert("Please provide video content/instruction.");
+        alert(t('newProject.validation.content'));
         return;
       }
     }
@@ -130,7 +132,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
     // Move UI update to top to ensure immediate feedback
     setStep('processing');
     setProgress(2);
-    setProcessingStatus('Initializing Studio...');
+    setProcessingStatus(t('newProject.initializing'));
     addLog('System initialized.');
 
     try {
@@ -187,7 +189,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
           }]
         };
       } else {
-        setProcessingStatus('Drafting Script & Storyboard...');
+        setProcessingStatus(t('projectList.status.generating_script'));
         addLog('Contacting Screenwriter Agent (OpenRouter / GPT-5)...');
 
         // Adjust prompt context based on mode
@@ -199,7 +201,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
         script = await generateMovieScript(apiKey, type, finalStyle, duration, contextContent);
 
         if (!script || !script.scenes) {
-          throw new Error("Received invalid script data from AI.");
+          throw new Error(t('newProject.validation.scriptError'));
         }
       }
 
@@ -213,8 +215,8 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       if (mode === 'video_continuation') {
         newProject.status = 'completed';
         newProject.progress = 100;
-        setProcessingStatus('Project initialized. Ready for manual extension.');
-        addLog('Project saved successfully.');
+        setProcessingStatus(t('newProject.projectInitialized'));
+        addLog(t('newProject.projectSaved'));
       } else {
         newProject.status = 'generating_images';
         setProgress(20);
@@ -247,7 +249,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
 
         newProject.status = 'completed';
         newProject.progress = 100;
-        setProcessingStatus('Production Complete! Saving to Database...');
+        setProcessingStatus(t('newProject.productionComplete'));
         addLog('All scenes rendered. Saving...');
       }
 
@@ -258,7 +260,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
 
     } catch (error) {
       console.error(error);
-      setProcessingStatus('Error Occurred');
+      setProcessingStatus(t('newProject.errorOccurred'));
       addLog(`CRITICAL ERROR: ${(error as Error).message}`);
       // Don't auto-redirect, let user see error
     }
@@ -280,7 +282,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
             ></div>
           </div>
           <p className="text-slate-400 mt-2 text-sm">{progress}% Complete</p>
-          {progress > 80 && <p className="text-xs text-amber-500 mt-1">Finalizing and saving high-res images... Do not close.</p>}
+          {progress > 80 && <p className="text-xs text-amber-500 mt-1">{t('newProject.doNotClose')}</p>}
         </div>
 
         <div className="bg-slate-950 rounded-lg p-4 font-mono text-xs text-green-400 h-64 overflow-y-auto border border-slate-800 custom-scrollbar">
@@ -293,9 +295,9 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
           {progress < 100 && <div className="animate-pulse">_</div>}
         </div>
 
-        {processingStatus === 'Error Occurred' && (
+        {processingStatus === t('newProject.errorOccurred') && (
           <div className="mt-6 text-center">
-            <Button variant="secondary" onClick={() => setStep('input')}>Back to Editor</Button>
+            <Button variant="secondary" onClick={() => setStep('input')}>{t('newProject.backToEditor')}</Button>
           </div>
         )}
       </div>
@@ -310,10 +312,10 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
         </div>
         <div>
           <h1 className="text-3xl font-bold text-white">
-            {mode === 'video_continuation' ? 'Video Continuation' : 'Create New Movie'}
+            {mode === 'video_continuation' ? t('newProject.videoContinuationTitle') : t('newProject.title')}
           </h1>
           <p className="text-slate-400">
-            {mode === 'video_continuation' ? 'Upload a video to continue its story' : 'Configure your generative film parameters'}
+            {mode === 'video_continuation' ? t('newProject.videoContinuationSubtitle') : t('newProject.subtitle')}
           </p>
         </div>
       </div>
@@ -321,9 +323,9 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
       {/* Mode Selection Tabs */}
       <div className="flex space-x-1 bg-slate-900 p-1 rounded-xl mb-8">
         {[
-          { id: 'storyboard', label: 'Storyboard', icon: ImageIcon },
-          { id: 'video_continuation', label: 'Video Continuation', icon: Film },
-          { id: 'freeform', label: 'Freeform', icon: Edit3 }
+          { id: 'storyboard', label: t('projectList.tabs.storyboard'), icon: ImageIcon },
+          { id: 'video_continuation', label: t('projectList.tabs.video_continuation'), icon: Film },
+          { id: 'freeform', label: t('projectList.tabs.freeform'), icon: Edit3 }
         ].map((m) => (
           <button
             key={m.id}
@@ -349,19 +351,19 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
             <>
               {/* Project Name Input */}
               <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-                <label className="block text-sm font-semibold text-slate-300 mb-4">Project Name</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-4">{t('newProject.projectName')}</label>
                 <input
                   type="text"
                   value={titleInput}
                   onChange={(e) => setTitleInput(e.target.value)}
-                  placeholder="Enter project name..."
+                  placeholder={t('newProject.projectNamePlaceholder')}
                   className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
 
               {/* Video Upload */}
               <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-                <label className="block text-sm font-semibold text-slate-300 mb-4">Source Video</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-4">{t('newProject.sourceVideo')}</label>
                 <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 text-center hover:border-indigo-500/50 transition-colors bg-slate-950/50 group cursor-pointer relative">
                   <input
                     type="file"
@@ -383,8 +385,8 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
                       </div>
                     ) : (
                       <>
-                        <p className="text-sm text-slate-300 font-medium">Click to upload video</p>
-                        <p className="text-xs text-slate-500">MP4, WebM (Max 50MB)</p>
+                        <p className="text-sm text-slate-300 font-medium">{t('newProject.uploadPlaceholder')}</p>
+                        <p className="text-xs text-slate-500">{t('newProject.uploadFormat')}</p>
                       </>
                     )}
                   </div>
@@ -396,7 +398,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
               {/* Content Type - Hidden for Freeform */}
               {mode !== 'freeform' && (
                 <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-                  <label className="block text-sm font-semibold text-slate-300 mb-4">Content Type</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-4">{t('newProject.contentType')}</label>
                   <div className="grid grid-cols-2 gap-3">
                     {VIDEO_TYPES.map(t => (
                       <button
@@ -416,7 +418,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
 
               {/* Visual Style */}
               <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-                <label className="block text-sm font-semibold text-slate-300 mb-4">Visual Style</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-4">{t('newProject.visualStyle')}</label>
                 <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                   {VIDEO_STYLES.map(s => (
                     <button
@@ -436,7 +438,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
                     type="text"
                     value={customStyle}
                     onChange={(e) => setCustomStyle(e.target.value)}
-                    placeholder="Enter custom style prompt..."
+                    placeholder={t('newProject.customStylePlaceholder')}
                     className="mt-4 w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
                   />
                 )}
@@ -444,7 +446,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
 
               {/* Length */}
               <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-                <label className="block text-sm font-semibold text-slate-300 mb-4">Target Duration</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-4">{t('newProject.targetDuration')}</label>
                 <div className="flex flex-wrap gap-2">
                   {VIDEO_LENGTHS.map(l => (
                     <button
@@ -469,7 +471,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
                       onChange={(e) => setCustomLength(e.target.value)}
                       className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
-                    <span className="text-slate-400 text-sm">minutes</span>
+                    <span className="text-slate-400 text-sm">{t('newProject.minutes')}</span>
                   </div>
                 )}
               </div>
@@ -485,21 +487,21 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
           {mode === 'video_continuation' ? (
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex-1 flex flex-col items-center justify-center">
               <label className="block text-sm font-semibold text-slate-300 mb-4 self-start">
-                Extracted Last Frame
+                {t('newProject.extractedFrame')}
               </label>
 
               {lastFrameUrl ? (
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-slate-700 shadow-lg">
                   <img src={lastFrameUrl} alt="Last Frame" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                    <p className="text-white text-sm font-medium">Ready for continuation</p>
+                    <p className="text-white text-sm font-medium">{t('newProject.readyForContinuation')}</p>
                   </div>
                 </div>
               ) : (
                 <div className="w-full aspect-video rounded-lg border-2 border-dashed border-slate-800 flex items-center justify-center">
                   <div className="text-center text-slate-600">
                     <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                    <p className="text-sm">Upload video to see preview</p>
+                    <p className="text-sm">{t('newProject.uploadToPreview')}</p>
                   </div>
                 </div>
               )}
@@ -507,16 +509,16 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
               <div className="mt-6 w-full p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
                 <div className="flex items-center gap-2 text-indigo-400 mb-2">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">Analysis</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider">{t('newProject.analysis')}</span>
                 </div>
                 <ul className="text-sm text-slate-400 space-y-1">
                   <li className="flex justify-between">
-                    <span>Frame Status:</span>
-                    <span className={lastFrameUrl ? "text-green-400" : "text-slate-500"}>{lastFrameUrl ? "Extracted" : "Pending"}</span>
+                    <span>{t('newProject.frameStatus')}:</span>
+                    <span className={lastFrameUrl ? "text-green-400" : "text-slate-500"}>{lastFrameUrl ? t('newProject.extracted') : t('newProject.pending')}</span>
                   </li>
                   <li className="flex justify-between">
-                    <span>Auto-Continue:</span>
-                    <span className="text-slate-200">Enabled</span>
+                    <span>{t('newProject.autoContinue')}:</span>
+                    <span className="text-slate-200">{t('newProject.enabled')}</span>
                   </li>
                 </ul>
               </div>
@@ -525,14 +527,14 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
             /* Normal Prompt Box for other modes */
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex-1 flex flex-col">
               <label className="block text-sm font-semibold text-slate-300 mb-4">
-                {mode === 'freeform' ? 'Creative Prompt' : 'Story Concept / Content'}
+                {mode === 'freeform' ? t('newProject.creativePrompt') : t('newProject.storyConcept')}
               </label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder={
-                  mode === 'freeform' ? "Enter a loose idea or theme (e.g., 'Dreams of a cybernetic whale')..." :
-                    "Describe your movie idea here. E.g., A detective in a rainy neo-tokyo..."
+                  mode === 'freeform' ? t('newProject.promptPlaceholderFreeform') :
+                    t('newProject.promptPlaceholderStory')
                 }
                 className="flex-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
               />
@@ -540,19 +542,19 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
               <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
                 <div className="flex items-center gap-2 text-indigo-400 mb-2">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">Estimated Output</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider">{t('newProject.estimatedOutput')}</span>
                 </div>
                 <ul className="text-sm text-slate-400 space-y-1">
                   <li className="flex justify-between">
-                    <span>Mode:</span>
+                    <span>{t('common.mode')}:</span>
                     <span className="text-slate-200 capitalize">{mode.replace('_', ' ')}</span>
                   </li>
                   <li className="flex justify-between">
-                    <span>Scenes to generate:</span>
-                    <span className="text-slate-200">{parseDuration() <= 1 && length === '14s' ? '1 scene' : `${parseDuration() * 4} shots`}</span>
+                    <span>{t('newProject.scenesToGenerate')}:</span>
+                    <span className="text-slate-200">{parseDuration() <= 1 && length === '14s' ? `1 ${t('common.scene')}` : `${parseDuration() * 4} ${t('common.shots')}`}</span>
                   </li>
                   <li className="flex justify-between">
-                    <span>Model:</span>
+                    <span>{t('newProject.model')}:</span>
                     <span className="text-slate-200">OpenRouter (GPT-5 + GPT-5-image)</span>
                   </li>
                 </ul>
@@ -567,7 +569,7 @@ export const NewProject: React.FC<NewProjectProps> = ({ apiKey, onProjectCreated
             onClick={handleGenerate}
             disabled={mode === 'video_continuation' && (!selectedFile || isProcessingVideo)}
           >
-            {isProcessingVideo ? 'Processing Video...' : 'Generate Movie'}
+            {isProcessingVideo ? t('newProject.processingButton') : t('newProject.generateButton')}
             {!isProcessingVideo && <ArrowRight className="ml-2 w-5 h-5" />}
           </Button>
         </div>
